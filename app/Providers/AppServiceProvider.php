@@ -2,10 +2,16 @@
 
 namespace App\Providers;
 
-use Handlers\EmailSendHandler;
-use Handlers\SmsSendHandler;
-use Handlers\TelegramSendHandler;
+use app\Helpers\ContainerAdapter;
+use app\Helpers\UserAdapter;
+
+use Enot\Common\Contracts\ContainerInterface;
+use Enot\Common\Contracts\UserInterface;
+use Enot\Otp\Contracts\UserSettingsRepositoryInterface;
+use Enot\Otp\Handlers\AbstractSendHandler;
+
 use Illuminate\Support\ServiceProvider;
+use Repositories\UserSettingsEloquentRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,22 +28,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->app->bind(TelegramSendHandler::class, function ($app) {
-            return new TelegramSendHandler(
-            // $app->resolve(TelegramBot::class)
-            );
-        });
+        $this->app->bind(UserInterface::class, UserAdapter::class);
+        $this->app->bind(ContainerInterface::class, ContainerAdapter::class);
+        $this->app->bind(UserSettingsRepositoryInterface::class, UserSettingsEloquentRepository::class);
 
-        $this->app->bind(EmailSendHandler::class, function ($app) {
-            return new EmailSendHandler(
-                // $app->resolve(EmailTransportService::class)
-            );
-        });
+        $this->bindOtpDependencies();
 
-        $this->app->bind(SmsSendHandler::class, function ($app) {
-            return new SmsSendHandler(
-                // $app->resolve(SmsTransportService::class)
-            );
-        });
+    }
+
+    private function bindOtpDependencies()
+    {
+        $this->app->when(AbstractSendHandler::class)
+            ->needs(UserSettingsRepositoryInterface::class)
+            ->give(function ($app) {
+                $app->make(UserSettingsRepositoryInterface::class);
+            });
     }
 }

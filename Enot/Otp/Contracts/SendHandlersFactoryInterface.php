@@ -6,5 +6,5 @@ namespace Enot\Otp\Contracts;
 
 interface SendHandlersFactoryInterface
 {
-    public function getSender(string $method): OneTimePasswordSendHandlerInterface;
+    public function getSender(string $name): OneTimePasswordSendHandlerInterface;
 }

@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Enot\Otp\Services;
 
-use Exceptions\UknownSenderTypeException;
-use Handlers\EmailSendHandler;
-use Handlers\SmsSendHandler;
-use Handlers\TelegramSendHandler;
 
-class OneTimePasswordSendHandlerFactory
+use Enot\Common\Contracts\ContainerInterface;
+use Enot\Otp\Contracts\OneTimePasswordSendHandlerInterface;
+use Enot\Otp\Contracts\SendHandlersFactoryInterface;
+use Enot\Otp\Exceptions\UknownSenderTypeException;
+use Enot\Otp\Handlers\EmailSendHandler;
+use Enot\Otp\Handlers\SmsSendHandler;
+use Enot\Otp\Handlers\TelegramSendHandler;
+
+class OneTimePasswordSendHandlerFactory implements SendHandlersFactoryInterface
 {
     private const SENDER_TELEGRAM_NAME = 'telegram';
     private const SENDER_EMAIL_NAME = 'email';
@@ -22,17 +26,17 @@ class OneTimePasswordSendHandlerFactory
     ];
 
     public function __construct(
-        private \ContainerInterface $di
+        private ContainerInterface $di
     )
     {
     }
 
-    public function getSender(string $name): \OneTimePasswordSendHandlerInterface
+    public function getSender(string $name): OneTimePasswordSendHandlerInterface
     {
-        if (!in_array($name, self::$senders)) {
+        if (!in_array($name, array_keys(self::$senders))) {
             throw new UknownSenderTypeException(sprintf('Отправитель %s не найден', $name));
         }
 
-        $this->di->resolve(self::$senders[$name]);
+        return $this->di->resolve(self::$senders[$name]);
     }
 }
